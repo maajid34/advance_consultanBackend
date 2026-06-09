@@ -1,23 +1,54 @@
 import Project from "../models/projectModels.js";
 import { uploadToR2 } from "../middleware/uploadR2.js";
 
+const getUploadedFiles = (req) => {
+  if (Array.isArray(req.files)) return req.files;
+
+  return [
+    ...(req.files?.images || []),
+    ...(req.files?.image || []),
+    ...(req.file ? [req.file] : []),
+  ];
+};
+
+const getActivities = (body, fallback = []) => {
+  const activities = body.activities ?? body["activities[]"] ?? fallback;
+  return Array.isArray(activities) ? activities : [activities];
+};
+
+const cleanOptionalValue = (value, fallback = "") => {
+  if (value === undefined) return fallback;
+  return value === "" ? "" : value;
+};
+
 /* CREATE */
 export const createProject = async (req, res, next) => {
   try {
-    let imageUrl = "";
+    const imageUrls = await Promise.all(
+      getUploadedFiles(req).map((file) => uploadToR2(file))
+    );
 
-    if (req.file) {
-      imageUrl = await uploadToR2(req.file);
+    if (imageUrls.length === 0) {
+      return res
+        .status(400)
+        .json({ message: "At least one project image is required" });
     }
+
+    const activities = getActivities(req.body).filter(Boolean);
+    const category = req.body.category || undefined;
 
     const project = await Project.create({
       ...req.body,
-      image: imageUrl,
+      category,
+      activities,
+      image: imageUrls[0],
+      images: imageUrls,
     });
 
     res.status(201).json(project);
   } catch (err) {
-    next(err);
+    console.error("Project create error:", err);
+    res.status(400).json({ message: err.message || "Create failed" });
   }
 };
 
@@ -77,24 +108,32 @@ export const updateProject = async (req, res) => {
       return res.status(404).json({ message: "Project not found" });
     }
 
-    // haddii sawir cusub la soo diray
-    if (req.file) {
-      project.image = await uploadToR2(req.file);
+    const imageUrls = await Promise.all(
+      getUploadedFiles(req).map((file) => uploadToR2(file))
+    );
+
+    if (imageUrls.length > 0) {
+      project.image = imageUrls[0];
+      project.images = imageUrls;
     }
 
     // update fields
-    project.title = req.body.title ?? project.title;
-    project.description = req.body.description ?? project.description;
-    project.location = req.body.location ?? project.location;
-    project.client = req.body.client ?? project.client;
-    project.date = req.body.date ?? project.date;
-    project.category = req.body.category ?? project.category;
-    project.activities = req.body.activities ?? project.activities;
+    project.title = cleanOptionalValue(req.body.title, project.title);
+    project.description = cleanOptionalValue(req.body.description, project.description);
+    project.location = cleanOptionalValue(req.body.location, project.location);
+    project.client = cleanOptionalValue(req.body.client, project.client);
+    project.date = cleanOptionalValue(req.body.date, project.date);
+    project.websiteUrl = cleanOptionalValue(req.body.websiteUrl, project.websiteUrl);
+    if (Object.hasOwn(req.body, "category")) {
+      project.category = req.body.category || undefined;
+    }
+    project.activities = getActivities(req.body, project.activities).filter(Boolean);
 
     const updated = await project.save();
     res.json(updated);
   } catch (err) {
-    res.status(400).json({ message: "Update failed" });
+    console.error("Project update error:", err);
+    res.status(400).json({ message: err.message || "Update failed" });
   }
 };
 
@@ -110,6 +149,7 @@ export const deleteProject = async (req, res) => {
     await project.deleteOne();
     res.json({ message: "Project deleted successfully" });
   } catch (err) {
-    res.status(400).json({ message: "Delete failed" });
+    console.error("Project delete error:", err);
+    res.status(400).json({ message: err.message || "Delete failed" });
   }
 };

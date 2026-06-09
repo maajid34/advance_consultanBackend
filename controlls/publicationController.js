@@ -9,6 +9,15 @@ CREATE PUBLICATION
 export const createPublication = async (req, res) => {
 
 try {
+const title = req.body.title?.trim();
+const description = req.body.description?.trim();
+const moreDescription = req.body.moreDescription?.trim();
+
+if (!title || !description || !moreDescription) {
+return res.status(400).json({
+message: "Title, short description, and full description are required",
+});
+}
 
 const image = req.uploadedFiles?.image;
 
@@ -30,11 +39,11 @@ message: "Image and PDF required",
 
 const publication = await Publication.create({
 
-title: req.body.title,
+title,
 
-description: req.body.description,
+description,
 
-moreDescription: req.body.moreDescription,
+moreDescription,
 
 // category: req.body.category,
 
@@ -68,7 +77,7 @@ res.status(500).json({
 
 success: false,
 
-message: error.message,
+message: error.message || "Publication create failed",
 
 });
 
@@ -182,6 +191,9 @@ UPDATE
 export const updatePublication = async (req, res) => {
 
 try {
+const title = req.body.title?.trim();
+const description = req.body.description?.trim();
+const moreDescription = req.body.moreDescription?.trim();
 
 const old = await Publication.findById(req.params.id);
 
@@ -201,11 +213,11 @@ message: "Publication not found",
 
 const updatedData = {
 
-title: req.body.title,
+title: title || old.title,
 
-description: req.body.description,
+description: description || old.description,
 
-moreDescription: req.body.moreDescription,
+moreDescription: moreDescription || old.moreDescription,
 
 imageUrl:
 

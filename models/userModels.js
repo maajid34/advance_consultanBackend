@@ -75,6 +75,12 @@ const userSchema = new mongoose.Schema(
       enum: ["admin", "user"],
       default: "admin",
     },
+
+    status: {
+      type: String,
+      enum: ["active", "inactive"],
+      default: "active",
+    },
   },
   { timestamps: true }
 );

@@ -220,7 +220,7 @@ console.log("R2 Upload Error:", error);
 
 return res.status(500).json({
 
-message: "File upload failed",
+message: `File upload failed: ${error.message}`,
 
 error: error.message,
 

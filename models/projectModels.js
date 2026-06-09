@@ -28,6 +28,7 @@ const projectSchema = new mongoose.Schema(
     location: String,
     client: String,
     date: String,
+    websiteUrl: String,
 
     category: {
       type: mongoose.Schema.Types.ObjectId,
@@ -36,9 +37,15 @@ const projectSchema = new mongoose.Schema(
     },
 
     image: {
-      type: String, // ✅ Cloudflare Image URL
-      required: true,
+      type: String,
+      default: "",
     },
+
+    images: [
+      {
+        type: String,
+      },
+    ],
   },
   { timestamps: true }
 );

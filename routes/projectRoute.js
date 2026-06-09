@@ -15,7 +15,14 @@ import { protect, adminOnly } from "../middleware/Auth.js";
 const router = express.Router();
 
 /* CREATE */
-router.post("/",upload.single("image"), createProject);
+router.post(
+  "/",
+  upload.fields([
+    { name: "images", maxCount: 12 },
+    { name: "image", maxCount: 12 },
+  ]),
+  createProject
+);
 
 /* READ */
 router.get("/", getProjects);
@@ -26,7 +33,14 @@ router.get("/id/:id", getProjectById);          // ✅ ID
 router.get("/slug/:slug", getSingleProjectBySlug); // ✅ SLUG
 
 /* UPDATE */
-router.put("/:id", upload.single("image"), updateProject);
+router.put(
+  "/:id",
+  upload.fields([
+    { name: "images", maxCount: 12 },
+    { name: "image", maxCount: 12 },
+  ]),
+  updateProject
+);
 
 /* DELETE */
 router.delete("/:id", deleteProject);
