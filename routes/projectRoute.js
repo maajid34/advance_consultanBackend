@@ -29,8 +29,9 @@ router.get("/", getProjects);
 router.get("/category/:categoryId", getProjectsByCategory);
 
 /* IMPORTANT: ORDER & PATH */
-router.get("/id/:id", getProjectById);          // ✅ ID
+// router.get("/id/:id", getProjectById);          // ✅ ID
 router.get("/slug/:slug", getSingleProjectBySlug); // ✅ SLUG
+router.get("/:id", getProjectById);
 
 /* UPDATE */
 router.put(
