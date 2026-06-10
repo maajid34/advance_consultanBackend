@@ -78,7 +78,7 @@ const allowedOrigins = [
   "https://advance-consultan-frontend.vercel.app",
   "https://advance-consultan-frontend.vercel.app/",
   "http://localhost:5173",
-  "http://localhost:3000",
+  "http://localhost:5300",
 ];
 
 // Strong CORS middleware
