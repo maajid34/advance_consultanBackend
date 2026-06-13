@@ -29,6 +29,7 @@ router.post(
 /* READ */
 router.get("/", getProjects);
 router.get("/category/:categoryId", getProjectsByCategory);
+router.get("/id/:id", getProjectById);
 
 /* IMPORTANT: ORDER & PATH */
 // router.get("/id/:id", getProjectById);          // ✅ ID
