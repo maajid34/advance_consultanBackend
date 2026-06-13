@@ -70,7 +70,21 @@ import messageRoutes from "./routes/messageRoutes.js";
 
 dotenv.config();
 
+const requiredEnv = ["MONGO_URI", "JWT_SECRET"];
+const missingEnv = requiredEnv.filter((key) => !process.env[key]);
+
+if (missingEnv.length > 0) {
+  console.error(`Missing required environment variables: ${missingEnv.join(", ")}`);
+  process.exit(1);
+}
+
 const app = express();
+app.set("trust proxy", 1);
+
+const envOrigins = (process.env.CLIENT_ORIGINS || "")
+  .split(",")
+  .map((origin) => origin.trim())
+  .filter(Boolean);
 
 const allowedOrigins = [
   "https://advance-consultant.site",
@@ -80,16 +94,30 @@ const allowedOrigins = [
   "http://localhost:5173",
   "http://127.0.0.1:5173",
   "http://localhost:5300",
+  ...envOrigins,
 ];
 
-// Strong CORS middleware
+app.use((req, res, next) => {
+  res.setHeader("X-Content-Type-Options", "nosniff");
+  res.setHeader("X-Frame-Options", "DENY");
+  res.setHeader("Referrer-Policy", "no-referrer");
+  res.setHeader("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
+  next();
+});
+
 app.use((req, res, next) => {
   const origin = req.headers.origin;
+  const isAllowedOrigin = !origin || allowedOrigins.includes(origin);
 
-  res.setHeader(
-    "Access-Control-Allow-Origin",
-    origin && allowedOrigins.includes(origin) ? origin : origin || "*"
-  );
+  if (!isAllowedOrigin && req.method === "OPTIONS") {
+    return res.status(403).json({ message: "CORS origin not allowed" });
+  }
+
+  if (origin && isAllowedOrigin) {
+    res.setHeader("Access-Control-Allow-Origin", origin);
+  } else if (!origin) {
+    res.setHeader("Access-Control-Allow-Origin", "*");
+  }
 
   res.setHeader("Vary", "Origin");
   res.setHeader("Access-Control-Allow-Credentials", "true");
@@ -111,14 +139,20 @@ app.use((req, res, next) => {
 
 app.use(
   cors({
-    origin: true,
+    origin(origin, callback) {
+      if (!origin || allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+
+      return callback(new Error("CORS origin not allowed"));
+    },
     credentials: true,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
 
-app.use(express.json());
+app.use(express.json({ limit: "1mb" }));
 
 const mongoOptions = {
   serverSelectionTimeoutMS: 5000,
@@ -161,7 +195,14 @@ app.use((err, req, res, next) => {
   if (err.code === "LIMIT_FILE_SIZE") {
     return res.status(413).json({
       success: false,
-      message: "Image is too large. Please upload images smaller than 10MB.",
+      message: "Uploaded file is too large. Please use a smaller file.",
+    });
+  }
+
+  if (err.code === "LIMIT_UNEXPECTED_FILE") {
+    return res.status(400).json({
+      success: false,
+      message: "Unsupported file type or upload field.",
     });
   }
 

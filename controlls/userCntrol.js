@@ -11,6 +11,8 @@ const generateToken = (id) => {
 
 const isDatabaseConnected = () => mongoose.connection.readyState === 1;
 
+const isActiveAdmin = (user) => user.role === "admin" && user.status !== "inactive";
+
 export const registerUser = async (req, res) => {
   try {
     if (!isDatabaseConnected()) {
@@ -26,6 +28,10 @@ export const registerUser = async (req, res) => {
 
     if (!name || !email || !password) {
       return res.status(400).json({ message: "Name, email, and password are required" });
+    }
+
+    if (password.length < 6) {
+      return res.status(400).json({ message: "Password must be at least 6 characters" });
     }
 
     const userExists = await User.findOne({ email });
@@ -119,13 +125,41 @@ export const updateUser = async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
+    const wasActiveAdmin = isActiveAdmin(user);
+    const nextRole = req.body.role !== undefined ? (req.body.role === "admin" ? "admin" : "user") : user.role;
+    const nextStatus =
+      req.body.status !== undefined
+        ? req.body.status === "inactive"
+          ? "inactive"
+          : "active"
+        : user.status;
+    const willRemainActiveAdmin = nextRole === "admin" && nextStatus !== "inactive";
+
+    if (wasActiveAdmin && !willRemainActiveAdmin) {
+      const activeAdminCount = await User.countDocuments({
+        role: "admin",
+        status: { $ne: "inactive" },
+      });
+
+      if (activeAdminCount <= 1) {
+        return res.status(400).json({
+          message: "Cannot remove or disable the last active admin account",
+        });
+      }
+    }
+
     if (req.body.name !== undefined) user.name = req.body.name.trim();
     if (req.body.email !== undefined) user.email = req.body.email.trim().toLowerCase();
-    if (req.body.role !== undefined) user.role = req.body.role === "admin" ? "admin" : "user";
+    if (req.body.role !== undefined) user.role = nextRole;
     if (req.body.status !== undefined) {
-      user.status = req.body.status === "inactive" ? "inactive" : "active";
+      user.status = nextStatus;
     }
-    if (req.body.password) user.password = req.body.password;
+    if (req.body.password) {
+      if (req.body.password.length < 6) {
+        return res.status(400).json({ message: "Password must be at least 6 characters" });
+      }
+      user.password = req.body.password;
+    }
 
     if (!user.name || !user.email) {
       return res.status(400).json({ message: "Name and email are required" });
@@ -157,6 +191,23 @@ export const deleteUser = async (req, res) => {
 
     if (!user) {
       return res.status(404).json({ message: "User not found" });
+    }
+
+    if (req.user?._id?.toString() === user._id.toString()) {
+      return res.status(400).json({ message: "You cannot delete your own account" });
+    }
+
+    if (isActiveAdmin(user)) {
+      const activeAdminCount = await User.countDocuments({
+        role: "admin",
+        status: { $ne: "inactive" },
+      });
+
+      if (activeAdminCount <= 1) {
+        return res.status(400).json({
+          message: "Cannot delete the last active admin account",
+        });
+      }
     }
 
     await user.deleteOne();

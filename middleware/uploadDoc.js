@@ -86,6 +86,14 @@ import crypto from "crypto";
 import path from "path";
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 
+const allowedTypesByField = {
+image: new Set(["image/jpeg", "image/png", "image/webp"]),
+file: new Set([
+"application/pdf",
+"application/msword",
+"application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+]),
+};
 
 // Multer memory storage
 
@@ -96,6 +104,20 @@ storage: multer.memoryStorage(),
 limits: {
 
 fileSize: 25 * 1024 * 1024,
+
+},
+
+fileFilter(req, file, cb) {
+
+const allowedTypes = allowedTypesByField[file.fieldname];
+
+if (!allowedTypes || !allowedTypes.has(file.mimetype)) {
+
+return cb(new multer.MulterError("LIMIT_UNEXPECTED_FILE", file.fieldname));
+
+}
+
+cb(null, true);
 
 },
 
