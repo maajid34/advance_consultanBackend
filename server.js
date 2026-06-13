@@ -75,9 +75,10 @@ const app = express();
 const allowedOrigins = [
   "https://advance-consultant.site",
   "https://www.advance-consultant.site",
+  "https://api.advance-consultant.site",
   "https://advance-consultan-frontend.vercel.app",
-  "https://advance-consultan-frontend.vercel.app/",
   "http://localhost:5173",
+  "http://127.0.0.1:5173",
   "http://localhost:5300",
 ];
 
@@ -85,11 +86,10 @@ const allowedOrigins = [
 app.use((req, res, next) => {
   const origin = req.headers.origin;
 
-  if (origin && allowedOrigins.includes(origin)) {
-    res.setHeader("Access-Control-Allow-Origin", origin);
-  } else if (!origin) {
-    res.setHeader("Access-Control-Allow-Origin", "*");
-  }
+  res.setHeader(
+    "Access-Control-Allow-Origin",
+    origin && allowedOrigins.includes(origin) ? origin : origin || "*"
+  );
 
   res.setHeader("Vary", "Origin");
   res.setHeader("Access-Control-Allow-Credentials", "true");
@@ -111,7 +111,7 @@ app.use((req, res, next) => {
 
 app.use(
   cors({
-    origin: allowedOrigins,
+    origin: true,
     credentials: true,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
