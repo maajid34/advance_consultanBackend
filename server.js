@@ -67,6 +67,7 @@ import categoryRoutes from "./routes/categoryRoutes.js";
 import publicationRoutes from "./routes/publicationRouter.js";
 import blogRoutes from "./routes/blogRoutes.js";
 import messageRoutes from "./routes/messageRoutes.js";
+import testimonialRoutes from "./routes/testimonialRoutes.js";
 
 dotenv.config();
 
@@ -180,6 +181,7 @@ app.use("/api/categories", categoryRoutes);
 app.use("/api/publications", publicationRoutes);
 app.use("/api/blogs", blogRoutes);
 app.use("/api/messages", messageRoutes);
+app.use("/api/testimonials", testimonialRoutes);
 
 // 404 handler with CORS headers
 app.use((req, res) => {
