@@ -17,6 +17,8 @@ const router = express.Router();
 /* CREATE */
 router.post(
   "/",
+  protect,
+  adminOnly,
   upload.fields([
     { name: "images", maxCount: 12 },
     { name: "image", maxCount: 12 },
@@ -36,6 +38,8 @@ router.get("/:id", getProjectById);
 /* UPDATE */
 router.put(
   "/:id",
+  protect,
+  adminOnly,
   upload.fields([
     { name: "images", maxCount: 12 },
     { name: "image", maxCount: 12 },
@@ -44,6 +48,6 @@ router.put(
 );
 
 /* DELETE */
-router.delete("/:id", deleteProject);
+router.delete("/:id", protect, adminOnly, deleteProject);
 
 export default router;

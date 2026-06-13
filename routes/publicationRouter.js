@@ -17,6 +17,8 @@ uploadToR2,
 
 } from "../middleware/uploadDoc.js";
 
+import { adminOnly, protect } from "../middleware/Auth.js";
+
 
 const router = express.Router();
 
@@ -27,6 +29,8 @@ router.post(
 
 "/",
 
+protect,
+adminOnly,
 uploadDoc,
 uploadToR2,
 
@@ -41,11 +45,13 @@ router.get("/", getPublications);
 
 router.get("/:id", getPublication);
 
-router.delete("/:id", deletePublication);
+router.delete("/:id", protect, adminOnly, deletePublication);
 
 // router.put("/:id", updatePublication);
 router.put(
 "/:id",
+protect,
+adminOnly,
 uploadDoc,
 uploadToR2,
 updatePublication

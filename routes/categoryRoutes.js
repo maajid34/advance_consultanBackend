@@ -10,9 +10,9 @@ import { protect, adminOnly } from "../middleware/Auth.js";
 
 const router = express.Router();
 
-router.post("/", createCategory);
+router.post("/", protect, adminOnly, createCategory);
 router.get("/", getCategories);
-router.put("/:id", updateCategory);
-router.delete("/:id", deleteCategory);
+router.put("/:id", protect, adminOnly, updateCategory);
+router.delete("/:id", protect, adminOnly, deleteCategory);
 
 export default router;
