@@ -7,7 +7,12 @@ import { v4 as uuidv4 } from "uuid";
 
 /* ================= MULTER ================= */
 const storage = multer.memoryStorage();
-export const upload = multer({ storage });
+export const upload = multer({
+  storage,
+  limits: {
+    fileSize: 10 * 1024 * 1024,
+  },
+});
 
 /* ================= CLOUDFLARE R2 CLIENT ================= */
 export const r2 = new S3Client({
@@ -24,14 +29,19 @@ export const r2 = new S3Client({
 export const uploadToR2 = async (file) => {
   const key = `projectss/${uuidv4()}-${file.originalname}`;
 
-  await r2.send(
-    new PutObjectCommand({
-      Bucket: process.env.R2_BUCKET_NAME,
-      Key: key,
-      Body: file.buffer,
-      ContentType: file.mimetype,
-    })
-  );
+  try {
+    await r2.send(
+      new PutObjectCommand({
+        Bucket: process.env.R2_BUCKET_NAME,
+        Key: key,
+        Body: file.buffer,
+        ContentType: file.mimetype,
+      })
+    );
+  } catch (error) {
+    console.error("R2 upload failed:", error);
+    throw new Error(`Image upload failed: ${error.message || "R2 upload error"}`);
+  }
 
   return `${process.env.R2_PUBLIC_URL}/${key}`;
 };

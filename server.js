@@ -158,6 +158,13 @@ app.use((req, res) => {
 // Error handler with CORS headers
 app.use((err, req, res, next) => {
   console.error("Server Error:", err);
+  if (err.code === "LIMIT_FILE_SIZE") {
+    return res.status(413).json({
+      success: false,
+      message: "Image is too large. Please upload images smaller than 10MB.",
+    });
+  }
+
   res.status(err.status || 500).json({
     success: false,
     message: err.message || "Internal Server Error",

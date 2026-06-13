@@ -48,7 +48,10 @@ export const createProject = async (req, res, next) => {
     res.status(201).json(project);
   } catch (err) {
     console.error("Project create error:", err);
-    res.status(400).json({ message: err.message || "Create failed" });
+    res.status(400).json({
+      message: err.message || "Create failed",
+      error: err.message,
+    });
   }
 };
 
@@ -133,7 +136,10 @@ export const updateProject = async (req, res) => {
     res.json(updated);
   } catch (err) {
     console.error("Project update error:", err);
-    res.status(400).json({ message: err.message || "Update failed" });
+    res.status(400).json({
+      message: err.message || "Update failed",
+      error: err.message,
+    });
   }
 };
 
