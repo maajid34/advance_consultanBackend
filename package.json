@@ -12,7 +12,8 @@
     "seed:projects": "node projectseed.js",
     "seed:blogs": "node blogseed.js",
     "seed:users": "node userseed.js",
-    "seed:testimonials": "node testimonialseed.js"
+    "seed:testimonials": "node testimonialseed.js",
+    "seed:partners": "node partnerseed.js"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.993.0",
