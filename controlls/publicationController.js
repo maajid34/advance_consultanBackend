@@ -1,316 +1,149 @@
 import Publication from "../models/publicactionModel.js";
 
-
-
-/*
-CREATE PUBLICATION
-*/
+const getTrimmedValue = (value) => (typeof value === "string" ? value.trim() : "");
 
 export const createPublication = async (req, res) => {
+  try {
+    const title = getTrimmedValue(req.body.title);
+    const description = getTrimmedValue(req.body.description);
+    const moreDescription = getTrimmedValue(req.body.moreDescription);
 
-try {
-const title = req.body.title?.trim();
-const description = req.body.description?.trim();
-const moreDescription = req.body.moreDescription?.trim();
+    if (!title || !description || !moreDescription) {
+      return res.status(400).json({
+        success: false,
+        message: "Title, short description, and full description are required",
+      });
+    }
 
-if (!title || !description || !moreDescription) {
-return res.status(400).json({
-message: "Title, short description, and full description are required",
-});
-}
+    const image = req.uploadedFiles?.image;
+    const pdf = req.uploadedFiles?.file;
 
-const image = req.uploadedFiles?.image;
+    if (!image || !pdf) {
+      return res.status(400).json({
+        success: false,
+        message: "Publication image and document file are required",
+      });
+    }
 
-const pdf = req.uploadedFiles?.file;
+    const publication = await Publication.create({
+      title,
+      description,
+      moreDescription,
+      imageUrl: image.url,
+      pdfUrl: pdf.url,
+      pdfKey: pdf.key,
+    });
 
-
-
-if (!image || !pdf) {
-
-return res.status(400).json({
-
-message: "Image and PDF required",
-
-});
-
-}
-
-
-
-const publication = await Publication.create({
-
-title,
-
-description,
-
-moreDescription,
-
-// category: req.body.category,
-
-imageUrl: image.url,
-
-pdfUrl: pdf.url,   // ✅ THIS IS THE FIX
-
-pdfKey: pdf.key,
-
-});
-
-
-
-res.status(201).json({
-
-success: true,
-
-data: publication,
-
-});
-
-
-
-} catch (error) {
-
-console.log("CREATE PUBLICATION ERROR:", error);
-
-
-
-res.status(500).json({
-
-success: false,
-
-message: error.message || "Publication create failed",
-
-});
-
-}
-
+    res.status(201).json({ success: true, data: publication });
+  } catch (error) {
+    console.error("Create publication error:", error);
+    res.status(500).json({
+      success: false,
+      message: error.message || "Publication create failed",
+    });
+  }
 };
-
-
-
-
-
-/*
-GET ALL
-*/
 
 export const getPublications = async (req, res) => {
-
-try {
-
-const publications = await Publication.find()
-
-.sort({ createdAt: -1 });
-
-
-
-res.json({
-
-success: true,
-
-data: publications,
-
-});
-
-
-
-} catch (error) {
-
-res.status(500).json({
-
-message: error.message,
-
-});
-
-}
-
+  try {
+    const publications = await Publication.find().sort({ createdAt: -1 });
+    res.json({ success: true, data: publications });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message || "Failed to load publications",
+    });
+  }
 };
-
-
-
-
-
-
-/*
-GET SINGLE
-*/
 
 export const getPublication = async (req, res) => {
+  try {
+    const publication = await Publication.findById(req.params.id);
 
-try {
+    if (!publication) {
+      return res.status(404).json({
+        success: false,
+        message: "Publication not found",
+      });
+    }
 
-const publication = await Publication.findById(req.params.id);
-
-
-
-if (!publication) {
-
-return res.status(404).json({
-
-message: "Publication not found",
-
-});
-
-}
-
-
-
-res.json({
-
-success: true,
-
-data: publication,
-
-});
-
-
-
-} catch (error) {
-
-res.status(500).json({
-
-message: error.message,
-
-});
-
-}
-
+    res.json({ success: true, data: publication });
+  } catch (error) {
+    res.status(400).json({
+      success: false,
+      message: error.message || "Invalid publication",
+    });
+  }
 };
-
-
-
-
-
-
-
-/*
-UPDATE
-*/
-
-
 
 export const updatePublication = async (req, res) => {
+  try {
+    const publication = await Publication.findById(req.params.id);
 
-try {
-const title = req.body.title?.trim();
-const description = req.body.description?.trim();
-const moreDescription = req.body.moreDescription?.trim();
+    if (!publication) {
+      return res.status(404).json({
+        success: false,
+        message: "Publication not found",
+      });
+    }
 
-const old = await Publication.findById(req.params.id);
+    const title = getTrimmedValue(req.body.title);
+    const description = getTrimmedValue(req.body.description);
+    const moreDescription = getTrimmedValue(req.body.moreDescription);
 
-if (!old) {
+    if (req.body.title !== undefined) {
+      if (!title) return res.status(400).json({ success: false, message: "Title is required" });
+      publication.title = title;
+    }
+    if (req.body.description !== undefined) {
+      if (!description) {
+        return res.status(400).json({ success: false, message: "Short description is required" });
+      }
+      publication.description = description;
+    }
+    if (req.body.moreDescription !== undefined) {
+      if (!moreDescription) {
+        return res.status(400).json({ success: false, message: "Full description is required" });
+      }
+      publication.moreDescription = moreDescription;
+    }
 
-return res.status(404).json({
+    if (req.uploadedFiles?.image) {
+      publication.imageUrl = req.uploadedFiles.image.url;
+    }
+    if (req.uploadedFiles?.file) {
+      publication.pdfUrl = req.uploadedFiles.file.url;
+      publication.pdfKey = req.uploadedFiles.file.key;
+    }
 
-message: "Publication not found",
-
-});
-
-}
-
-
-
-/* NEW DATA */
-
-const updatedData = {
-
-title: title || old.title,
-
-description: description || old.description,
-
-moreDescription: moreDescription || old.moreDescription,
-
-imageUrl:
-
-req.uploadedFiles?.image?.url || old.imageUrl,
-
-pdfUrl:
-
-req.uploadedFiles?.file?.url || old.pdfUrl,
-
-pdfKey:
-
-req.uploadedFiles?.file?.key || old.pdfKey,
-
+    const updated = await publication.save();
+    res.json({ success: true, data: updated });
+  } catch (error) {
+    console.error("Update publication error:", error);
+    res.status(500).json({
+      success: false,
+      message: error.message || "Publication update failed",
+    });
+  }
 };
-
-
-
-const publication = await Publication.findByIdAndUpdate(
-
-req.params.id,
-
-updatedData,
-
-{ new: true }
-
-);
-
-
-
-res.json({
-
-success: true,
-
-data: publication,
-
-});
-
-
-
-}
-
-catch (error) {
-
-console.log(error);
-
-res.status(500).json({
-
-message: error.message,
-
-});
-
-}
-
-};
-
-
-
-
-
-
-
-
-
-/*
-DELETE
-*/
 
 export const deletePublication = async (req, res) => {
+  try {
+    const publication = await Publication.findById(req.params.id);
 
-try {
+    if (!publication) {
+      return res.status(404).json({
+        success: false,
+        message: "Publication not found",
+      });
+    }
 
-await Publication.findByIdAndDelete(req.params.id);
-
-
-
-res.json({
-
-success: true,
-
-message: "Publication deleted",
-
-});
-
-
-
-} catch (error) {
-
-res.status(500).json({
-
-message: error.message,
-
-});
-
-}
-
+    await publication.deleteOne();
+    res.json({ success: true, message: "Publication deleted successfully" });
+  } catch (error) {
+    res.status(400).json({
+      success: false,
+      message: error.message || "Delete failed",
+    });
+  }
 };

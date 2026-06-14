@@ -4,21 +4,32 @@ dotenv.config();
 import mongoose from "mongoose";
 import User from "./models/userModels.js";
 
+const adminPassword = process.env.SEED_ADMIN_PASSWORD;
+const userPassword = process.env.SEED_USER_PASSWORD;
+
+if (!adminPassword || adminPassword.length < 8) {
+  throw new Error("SEED_ADMIN_PASSWORD is required and must be at least 8 characters");
+}
+
 const users = [
   {
     name: "Advance Admin",
-    email: "advance@gmail.com",
-    password: "advance1234",
+    email: process.env.SEED_ADMIN_EMAIL || "advance@gmail.com",
+    password: adminPassword,
     role: "admin",
     status: "active",
   },
-  {
-    name: "Advance User",
-    email: "user@advance-consultant.net",
-    password: "user1234",
-    role: "user",
-    status: "active",
-  },
+  ...(userPassword
+    ? [
+        {
+          name: "Advance User",
+          email: process.env.SEED_USER_EMAIL || "user@advance-consultant.site",
+          password: userPassword,
+          role: "user",
+          status: "active",
+        },
+      ]
+    : []),
 ];
 
 const mongoOptions = {

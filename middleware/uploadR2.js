@@ -2,6 +2,7 @@ import dotenv from "dotenv";
 dotenv.config();
 
 import multer from "multer";
+import path from "path";
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 import { v4 as uuidv4 } from "uuid";
 
@@ -41,7 +42,8 @@ export const r2 = new S3Client({
 
 /* ================= UPLOAD FUNCTION ================= */
 export const uploadToR2 = async (file) => {
-  const key = `projectss/${uuidv4()}-${file.originalname}`;
+  const ext = path.extname(file.originalname).toLowerCase();
+  const key = `projects/${uuidv4()}${ext}`;
 
   try {
     await r2.send(
@@ -59,34 +61,4 @@ export const uploadToR2 = async (file) => {
 
   return `${process.env.R2_PUBLIC_URL}/${key}`;
 };
-
-
-// /* ================= TEST FUNCTION ================= */
-// export const testR2Connection = async () => {
-//   try {
-//     console.log("Testing R2 upload...");
-
-//     await r2.send(
-//       new PutObjectCommand({
-//         Bucket: process.env.R2_BUCKET_NAME,
-//         Key: "test.txt",
-//         Body: "hello world",
-//         ContentType: "text/plain",
-//       })
-//     );
-
-//     console.log("✅ R2 TEST SUCCESS: test.txt uploaded");
-//   } catch (error) {
-//     console.error("❌ R2 TEST FAILED");
-//     console.error(error);
-//   }
-// };
-
-// /* AUTO RUN TEST */
-// testR2Connection();
-
-
-// console.log("R2_ACCESS_KEY:", process.env.R2_ACCESS_KEY);
-// console.log("R2_SECRET_KEY:", process.env.R2_SECRET_KEY);
-// console.log("R2_ENDPOINT:", process.env.R2_ENDPOINT);
 

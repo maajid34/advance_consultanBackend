@@ -1,253 +1,81 @@
-// import multer from "multer";
-// import crypto from "crypto";
-// import path from "path";
-// import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
-
-// const upload = multer({
-//   storage: multer.memoryStorage(),
-//   limits: { fileSize: 25 * 1024 * 1024 },
-// });
-
-// const r2 = new S3Client({
-//   region: "auto",
-//   endpoint: process.env.R2_ENDPOINT,
-//   credentials: {
-//     accessKeyId: process.env.R2_ACCESS_KEY,
-//     secretAccessKey: process.env.R2_SECRET_KEY,
-//   },
-//   forcePathStyle: true,
-// });
-
-// export const uploadDoc = upload.single("file");
-
-// // export const uploadToR2 = async (req, res, next) => {
-// //   if (!req.file) return next();
-
-// //   const ext = path.extname(req.file.originalname);
-// //   const key = `publications/${Date.now()}-${crypto.randomUUID()}${ext}`;
-
-// //   await r2.send(
-// //     new PutObjectCommand({
-// //       Bucket: process.env.R2_BUCKET_NAME,
-// //       Key: key,
-// //       Body: req.file.buffer,
-// //       ContentType: req.file.mimetype,
-// //     })
-// //   );
-
-// //   req.fileData = {
-// //     fileUrl: `${process.env.R2_PUBLIC_URL}/${key}`,
-// //     storageKey: key,
-// //     mimetype: req.file.mimetype,
-// //     size: req.file.size,
-// //   };
-
-// //   next();
-// // };
-
-
-// export const uploadToR2 = async (req, res, next) => {
-
-// if (!req.files) return next();
-
-// req.uploadedFiles = {};
-
-// for (const field in req.files) {
-
-// const file = req.files[field][0];
-
-// const ext = path.extname(file.originalname);
-
-// const key = `publications/${Date.now()}-${crypto.randomUUID()}${ext}`;
-
-// await r2.send(
-// new PutObjectCommand({
-// Bucket: process.env.R2_BUCKET_NAME,
-// Key: key,
-// Body: file.buffer,
-// ContentType: file.mimetype,
-// })
-// );
-
-// req.uploadedFiles[field] = {
-// url: `${process.env.R2_PUBLIC_URL}/${key}`,
-// key: key,
-// };
-
-// }
-
-// next();
-
-// };
-
-
-import multer from "multer";
 import crypto from "crypto";
 import path from "path";
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
+import multer from "multer";
 
 const allowedTypesByField = {
-image: new Set(["image/jpeg", "image/png", "image/webp"]),
-file: new Set([
-"application/pdf",
-"application/msword",
-"application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-]),
+  image: new Set(["image/jpeg", "image/png", "image/webp"]),
+  file: new Set([
+    "application/pdf",
+    "application/msword",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  ]),
 };
-
-// Multer memory storage
 
 const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 25 * 1024 * 1024,
+  },
+  fileFilter(req, file, cb) {
+    const allowedTypes = allowedTypesByField[file.fieldname];
 
-storage: multer.memoryStorage(),
+    if (!allowedTypes || !allowedTypes.has(file.mimetype)) {
+      return cb(new multer.MulterError("LIMIT_UNEXPECTED_FILE", file.fieldname));
+    }
 
-limits: {
-
-fileSize: 25 * 1024 * 1024,
-
-},
-
-fileFilter(req, file, cb) {
-
-const allowedTypes = allowedTypesByField[file.fieldname];
-
-if (!allowedTypes || !allowedTypes.has(file.mimetype)) {
-
-return cb(new multer.MulterError("LIMIT_UNEXPECTED_FILE", file.fieldname));
-
-}
-
-cb(null, true);
-
-},
-
+    cb(null, true);
+  },
 });
-
-
-
-// Cloudflare R2 config
 
 const r2 = new S3Client({
-
-region: "auto",
-
-endpoint: process.env.R2_ENDPOINT,
-
-credentials: {
-
-accessKeyId: process.env.R2_ACCESS_KEY,
-
-secretAccessKey: process.env.R2_SECRET_KEY,
-
-},
-
-forcePathStyle: true,
-
+  region: "auto",
+  endpoint: process.env.R2_ENDPOINT,
+  credentials: {
+    accessKeyId: process.env.R2_ACCESS_KEY,
+    secretAccessKey: process.env.R2_SECRET_KEY,
+  },
+  forcePathStyle: true,
 });
-
-
-
-/*
-IMPORTANT
-
-image = publication image
-
-file = PDF
-
-*/
 
 export const uploadDoc = upload.fields([
-
-{ name: "image", maxCount: 1 },
-
-{ name: "file", maxCount: 1 },
-
+  { name: "image", maxCount: 1 },
+  { name: "file", maxCount: 1 },
 ]);
 
-
-
-
-
 export const uploadToR2 = async (req, res, next) => {
+  try {
+    if (!req.files) {
+      return next();
+    }
 
-try {
+    req.uploadedFiles = {};
 
-if (!req.files) {
+    for (const fieldName in req.files) {
+      const file = req.files[fieldName][0];
+      const ext = path.extname(file.originalname);
+      const key = `publications/${Date.now()}-${crypto.randomUUID()}${ext}`;
 
-return next();
+      await r2.send(
+        new PutObjectCommand({
+          Bucket: process.env.R2_BUCKET_NAME,
+          Key: key,
+          Body: file.buffer,
+          ContentType: file.mimetype,
+        })
+      );
 
-}
+      req.uploadedFiles[fieldName] = {
+        url: `${process.env.R2_PUBLIC_URL}/${key}`,
+        key,
+        type: file.mimetype,
+        size: file.size,
+      };
+    }
 
-
-
-req.uploadedFiles = {};
-
-
-
-for (const fieldName in req.files) {
-
-const file = req.files[fieldName][0];
-
-
-
-const ext = path.extname(file.originalname);
-
-
-
-const key = `publications/${Date.now()}-${crypto.randomUUID()}${ext}`;
-
-
-
-await r2.send(
-
-new PutObjectCommand({
-
-Bucket: process.env.R2_BUCKET_NAME,
-
-Key: key,
-
-Body: file.buffer,
-
-ContentType: file.mimetype,
-
-})
-
-);
-
-
-
-// save uploaded file info
-
-req.uploadedFiles[fieldName] = {
-
-url: `${process.env.R2_PUBLIC_URL}/${key}`,
-
-key: key,
-
-type: file.mimetype,
-
-size: file.size,
-
-};
-
-}
-
-
-
-next();
-
-} catch (error) {
-
-console.log("R2 Upload Error:", error);
-
-return res.status(500).json({
-
-message: `File upload failed: ${error.message}`,
-
-error: error.message,
-
-});
-
-}
-
+    next();
+  } catch (error) {
+    console.error("R2 publication upload failed:", error);
+    next(new Error(`File upload failed: ${error.message || "R2 upload error"}`));
+  }
 };
