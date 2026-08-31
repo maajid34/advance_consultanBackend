@@ -39,7 +39,7 @@ const blogSchema = new mongoose.Schema(
     },
     author: {
       type: String,
-      default: "Advance Consultant",
+      default: "Aqoonmaal Consultant",
       trim: true,
     },
     status: {

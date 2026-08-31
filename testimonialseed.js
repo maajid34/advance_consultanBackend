@@ -10,8 +10,8 @@ const testimonials = [
     role: "Operations Lead",
     organization: "Local NGO",
     message:
-      "Advance Consultant helped us set up our digital presence smoothly. Their professionalism is unmatched.",
-    imageUrl: "/logo1.png",
+      "Aqoonmaal Consultant helped us set up our digital presence smoothly. Their professionalism is unmatched.",
+    imageUrl: "/aqoonmaal-logo.svg",
     rating: 5,
     order: 1,
   },
@@ -21,7 +21,7 @@ const testimonials = [
     organization: "Development Partner",
     message:
       "Great experience. The team supported our project from start to finish with excellent communication.",
-    imageUrl: "/logo1.png",
+    imageUrl: "/aqoonmaal-logo.svg",
     rating: 5,
     order: 2,
   },
@@ -31,7 +31,7 @@ const testimonials = [
     organization: "Community Organization",
     message:
       "Their consultancy services improved our workflow and made our reporting process clearer.",
-    imageUrl: "/logo1.png",
+    imageUrl: "/aqoonmaal-logo.svg",
     rating: 5,
     order: 3,
   },
@@ -41,7 +41,7 @@ const testimonials = [
     organization: "Private Sector Client",
     message:
       "I was impressed by their data analysis solutions and the clarity of the final reporting.",
-    imageUrl: "/logo1.png",
+    imageUrl: "/aqoonmaal-logo.svg",
     rating: 5,
     order: 4,
   },

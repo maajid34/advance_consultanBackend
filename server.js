@@ -39,6 +39,8 @@ const envOrigins = (process.env.CLIENT_ORIGINS || "")
   .filter(Boolean);
 
 const allowedOrigins = [
+  "https://aqoonmaalconsultant.site",
+  "https://www.aqoonmaalconsultant.site",
   "https://advance-consultant.site",
   "https://www.advance-consultant.site",
   "https://api.advance-consultant.site",
@@ -122,7 +124,7 @@ mongoose
 app.get("/", (req, res) => {
   res.json({
     status: "success",
-    message: "Advance Consultant API is running",
+    message: "Aqoonmaal Consultant API is running",
   });
 });
 

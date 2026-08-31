@@ -71,7 +71,7 @@ export const createBlog = async (req, res) => {
       imageUrl,
       category: req.body.category?.trim() || "Insights",
       tags: parseTags(req.body.tags),
-      author: req.body.author?.trim() || "Advance Consultant",
+      author: req.body.author?.trim() || "Aqoonmaal Consultant",
       status: req.body.status === "draft" ? "draft" : "published",
       publishedAt: req.body.publishedAt || Date.now(),
     });
@@ -133,7 +133,7 @@ export const updateBlog = async (req, res) => {
     if (req.body.content !== undefined) blog.content = req.body.content.trim();
     if (req.body.category !== undefined) blog.category = req.body.category.trim() || "Insights";
     if (req.body.tags !== undefined) blog.tags = parseTags(req.body.tags);
-    if (req.body.author !== undefined) blog.author = req.body.author.trim() || "Advance Consultant";
+    if (req.body.author !== undefined) blog.author = req.body.author.trim() || "Aqoonmaal Consultant";
     if (req.body.status !== undefined) {
       blog.status = req.body.status === "draft" ? "draft" : "published";
     }
