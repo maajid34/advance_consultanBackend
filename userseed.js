@@ -14,7 +14,7 @@ if (!adminPassword || adminPassword.length < 8) {
 const users = [
   {
     name: "Aqoonmaal Admin",
-    email: process.env.SEED_ADMIN_EMAIL || "advance@gmail.com",
+    email: process.env.SEED_ADMIN_EMAIL || "admin@aqoonmaalconsultant.site",
     password: adminPassword,
     role: "admin",
     status: "active",
